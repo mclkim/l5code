@@ -2,7 +2,6 @@
 
 ---
 
-[![Build Status](https://travis-ci.org/appkr/l5code.svg?branch=master)](https://travis-ci.org/appkr/l5code)
 
 # 라라벨로 배우는 실전 PHP 웹 프로그래밍 (출판용 소스코드)
 
