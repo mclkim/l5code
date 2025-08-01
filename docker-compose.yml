@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+
+  mysql:
+    image: mysql:5.7.32
+    container_name: mysql
+    volumes:
+      # - ~/mysql_data:/var/lib/mysql/
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - MYSQL_USER=root
+      - MYSQL_ROOT_PASSWORD=secret
+    ports:
+      - 3306:3306
+    command: mysqld --skip-ssl --character_set_server=utf8mb4 --explicit_defaults_for_timestamp --lower_case_table_names=1
+    healthcheck:
+      test: mysql -uroot -psecret -e 'SELECT 1' || exit 1
+      interval: 60s
+
+  redis:
+    image: redis:6.2.4
+    container_name: redis
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: redis-cli info stats || exit 1
+      interval: 60s
+
+  laravel:
+    build:
+      context: .
+    image: laravel:latest
+    container_name: laravel
+    volumes:
+      - .:/app
+    environment:
+      - DB_HOST=mysql
+      - DB_DATABASE=myapp
+      - DB_USERNAME=homestead
+      - DB_PASSWORD=secret
+    ports:
+      - 8000:80
+    depends_on:
+      - mysql
+    healthcheck:
+      test: /usr/local/bin/php /app/artisan || exit 1
+      interval: 60s

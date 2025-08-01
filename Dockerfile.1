@@ -1,0 +1,44 @@
+FROM php:7.1-apache
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Seoul
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV COMPOSER_HOME=/composer
+ENV PATH=$PATH:/composer/vendor/bin
+
+# @see https://hub.docker.com/_/php "How to install more PHP extensions"
+RUN apt update &&\
+    apt install -y --no-install-recommends \
+        python \
+        ca-certificates \
+        cron \
+        gnupg \
+        libmcrypt-dev \
+        libpng-dev \
+        libzip-dev \
+        supervisor &&\
+    docker-php-source extract &&\
+    docker-php-ext-install gd &&\
+    docker-php-ext-install mcrypt &&\
+    docker-php-ext-install pdo &&\
+    docker-php-ext-install pdo_mysql &&\
+    docker-php-ext-install zip &&\
+    docker-php-ext-enable gd pdo pdo_mysql zip &&\
+    docker-php-source delete &&\
+    apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+COPY docker/files /
+
+RUN a2dissite 000-default && a2ensite laravel && a2enmod rewrite headers && \
+    bash -c "source /etc/apache2/envvars"
+
+RUN pecl install -f xdebug-2.9.0
+
+RUN php -r "readfile('https://getcomposer.org/installer');" | php -- --install-dir=/usr/local/bin/ &&\
+    mv /usr/local/bin/composer.phar /usr/local/bin/composer
+
+WORKDIR /app
+
+EXPOSE 80
